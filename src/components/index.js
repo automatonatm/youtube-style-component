@@ -1,0 +1,5 @@
+export {default as Menu} from 'components/menu/Menu'
+export {default as Navbar} from 'components/navBar/Navbar'
+export {default as Card} from 'components/card/Card'
+export {default as Comments} from 'components/comments/Comments'
+export {default as Comment} from 'components/comments/Comment'
