@@ -1,6 +1,10 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import styled  from 'styled-components'
 import {Card} from "components";
+import api from 'util/axios'
+
+import {getVideos, defaultState} from 'store/reducers/videosSlice'
+import {useDispatch, useSelector} from "react-redux";
 
 const Container = styled.div`
     display: flex;
@@ -9,19 +13,45 @@ const Container = styled.div`
  
 `
 
-const Home = () => {
+const Home = ({type}) => {
+
+
+    const dispatch = useDispatch()
+
+
+    //const [videos, setVideos] = useState([])
+    //const [loading, setLoading] = useState(false)
+
+    const {videos, loading, error} = useSelector(state => state.videos)
+
+    useEffect(() => {
+
+        dispatch(defaultState())
+
+        dispatch(getVideos({type}))
+
+
+    }, [dispatch, type])
+
+
+
     return (
         <Container>
-            <Card />
-            <Card />
-            <Card />
-            <Card />
-            <Card />
-            <Card />
-            <Card />
-            <Card />
-            <Card />
-            <Card />
+
+
+            {loading ? <p>Loading...</p> : (
+                <>
+                    {
+                      videos &&  (
+                          videos.data.map(video => (
+                              <Card key={video._id} video={video}/>
+                          ))
+                      )
+                    }
+                </>
+            )}
+
+
         </Container>
     );
 };

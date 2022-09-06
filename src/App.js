@@ -3,6 +3,8 @@ import {Menu, Navbar} from "components";
 import {darkTheme, lightTheme} from "./utils/Theme";
 import React, {useState} from "react";
 
+
+
 import {
     BrowserRouter,
     Routes,
@@ -46,7 +48,9 @@ function App() {
                           <Routes>
                               <Route  path="/">
                                   <Route path="sign-in" element={<SignIn />} />
-                                  <Route index element={<Home/>}/>
+                                  <Route index element={<Home type="random"/>}/>
+                                  <Route path="explore" element={<Home type="trend"/>}/>
+                                  <Route path="subscriptions" element={<Home type="sub"/>}/>
                                   <Route path="video">
                                       <Route  path=":id" element={<Video/>}/>
                                   </Route>

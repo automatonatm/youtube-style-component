@@ -1,6 +1,8 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import styled from 'styled-components'
 import {Link} from "react-router-dom";
+import {format} from 'timeago.js'
+import api from "util/axios";
 
 const Container = styled.div`
   width: ${({type}) => type !== 'sm' && '360px'};;
@@ -58,19 +60,49 @@ const Info = styled.div`
     display: ${({type}) => type === 'sm' && 'none'};
 `
 
-const Card = ({type}) => {
+const Card = ({type, video}) => {
+
+    const [channel, setChannel] = useState([])
+
+    const [loading, setLoading] = useState(false)
+
+    useEffect(() => {
+
+        setLoading(true)
+
+        const fetchChannel = async () => {
+
+            try {
+                const { data: {data} } = await api.get(`/users/${video.userId}`);
+
+                setLoading(false)
+
+                setChannel(data)
+
+            }catch (err) {
+                setLoading(false)
+                const error = err.response && err.response.data.message
+                    ? err.response.data.message
+                    : err.message
+            }
+        }
+
+        fetchChannel()
+
+    }, [video])
     return (
-        <Link to="/video/1" style={{
+        <Link to={`/video/${video._id}`} style={{
             textDecoration: 'none'
         }}>
+
         <Container type={type}>
-                <Image type={type} src="https://i9.ytimg.com/vi_webp/k3Vfj-e1Ma4/mqdefault.webp?v=6277c159&sqp=CIjm8JUG&rs=AOn4CLDeKmf_vlMC1q9RBEZu-XQApzm6sA"/>
+                <Image type={type} src={video.imgUrl}/>
                 <Details type={type}>
-                    <ChannelImage type={type} src="https://yt3.ggpht.com/yti/APfAmoE-Q0ZLJ4vk3vqmV4Kwp0sbrjxLyB8Q4ZgNsiRH=s88-c-k-c0x00ffffff-no-rj-mo" />
+                    <ChannelImage type={type} src={channel.img} />
                     <Texts>
-                        <Title>Test Video</Title>
-                        <ChannelName>Lama Dev</ChannelName>
-                        <Info type={type}>660,908 views • 1 day ago</Info>
+                        <Title>{video.title}</Title>
+                        <ChannelName>{channel.name}</ChannelName>
+                        <Info type={type}>{video.views} views • {format(video.createdAt)}</Info>
                     </Texts>
                 </Details>
         </Container>

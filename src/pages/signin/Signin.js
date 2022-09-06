@@ -1,5 +1,16 @@
-import React from "react";
+import React, {useState} from "react";
 import styled from "styled-components";
+import api from "util/axios";
+import {useDispatch, useSelector} from "react-redux";
+import {loginStart, loginSuccess, loginFailure} from "store/reducers/userSlice";
+
+import {auth, provider} from "util/firebase";
+
+import {signInWithPopup} from 'firebase/auth'
+import {useNavigate} from "react-router";
+import {logout} from "../../store/reducers/userSlice";
+
+
 
 const Container = styled.div`
   display: flex;
@@ -64,18 +75,106 @@ const Link = styled.span`
 `;
 
 const SignIn = () => {
+
+    const navigate = useNavigate()
+
+    const [name, setName] = useState("")
+    const [error, setError] = useState("")
+    const [email, setEmail] = useState("")
+    const [password, setPassword] = useState("")
+
+    const [loading, setLoading] = useState(false)
+
+    const dispatch = useDispatch()
+
+
+    const loginHandler = async (e) => {
+        e.preventDefault()
+
+
+        dispatch(loginStart())
+
+
+            try {
+                const { data: {data} } = await api.post(`/auth/signin`, {email, password});
+
+
+                dispatch(logout())
+                dispatch(loginSuccess(data))
+
+                navigate('/')
+
+
+            }catch (err) {
+                setLoading(false)
+
+                dispatch(loginFailure(err.response && err.response.data.message
+                    ? err.response.data.message
+                    : err.message))
+
+                setError(err.response && err.response.data.message
+                    ? err.response.data.message
+                    : err.message)
+            }
+
+        console.log(error)
+
+
+    }
+
+    const signInWithGoogle = async () => {
+
+        signInWithPopup(auth, provider).then( async (result) => {
+
+
+            const {user : {displayName: name, email, photoURL: img}} = result
+
+
+
+            dispatch(loginStart())
+
+            try {
+                const { data: {data} } = await api.post(`/auth/google`, {name, email, img});
+
+
+
+                dispatch(loginSuccess(data))
+
+                navigate('/')
+
+
+            }catch (err) {
+
+                dispatch(loginFailure(err.response && err.response.data.message
+                    ? err.response.data.message
+                    : err.message))
+
+                setError(err.response && err.response.data.message
+                    ? err.response.data.message
+                    : err.message)
+            }
+
+
+        }).catch((error) => {
+            console.log(error)
+        })
+
+
+    }
+
     return (
         <Container>
             <Wrapper>
                 <Title>Sign in</Title>
                 <SubTitle>to continue to LamaTube</SubTitle>
-                <Input placeholder="username" />
-                <Input type="password" placeholder="password" />
-                <Button>Sign in</Button>
+                <Input placeholder="email" onChange={e => setEmail(e.target.value)} />
+                <Input type="password"  placeholder="password" onChange={e => setPassword(e.target.value)}  />
+                <Button onClick={loginHandler}>Sign in</Button>
                 <Title>or</Title>
-                <Input placeholder="username" />
-                <Input placeholder="email" />
-                <Input type="password" placeholder="password" />
+                <Button onClick={signInWithGoogle}>Sign in with Google</Button>
+                <Input placeholder="username"  onChange={e => setName(e.target.value)} />
+                <Input placeholder="email" onChange={e => setEmail(e.target.value)}  />
+                <Input type="password" placeholder="password" onChange={e => setPassword(e.target.value)}  />
                 <Button>Sign up</Button>
             </Wrapper>
             <More>

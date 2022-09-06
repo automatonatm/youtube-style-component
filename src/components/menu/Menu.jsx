@@ -18,6 +18,7 @@ import HelpOutlineOutlinedIcon from "@mui/icons-material/HelpOutlineOutlined";
 import SettingsBrightnessOutlinedIcon from "@mui/icons-material/SettingsBrightnessOutlined";
 import {images} from 'constants'
 import {Link} from "react-router-dom";
+import {useSelector} from "react-redux";
 
 const Container = styled.div`
   flex: 1;
@@ -91,6 +92,10 @@ const Title = styled.h2`
 `
 
 const Menu = ({switchMode}) => {
+
+
+    const {user, loading, error} = useSelector(state => state.user)
+
     return (
         <Container>
             <Wrapper>
@@ -107,14 +112,26 @@ const Menu = ({switchMode}) => {
                     <HomeIcon />
                     Home
                 </Item>
+
+                <Link to="/explore">
                 <Item>
                     <ExploreOutlinedIcon />
                     Explore
                 </Item>
-                <Item>
-                    <SubscriptionsOutlinedIcon />
-                    Subscriptions
-                </Item>
+                </Link>
+
+                {
+                    user && (
+                        <Link to="/subscriptions">
+                            <Item>
+                                <SubscriptionsOutlinedIcon />
+                                Subscriptions
+                            </Item>
+                        </Link>
+                    )
+                }
+
+
                 <Hr/>
                 <Item>
                     <VideoLibraryOutlinedIcon />
@@ -125,13 +142,22 @@ const Menu = ({switchMode}) => {
                     History
                 </Item>
                 <Hr/>
-                <Link to="/sign-in">
-                <Login>
-                    Sign in to like video, comment, and subscribe.
-                    <Button><AccountCircleOutlinedIcon/> SIGN IN</Button>
-                </Login>
-                </Link>
-                <Hr/>
+
+                {
+                    !user && (
+                        <>
+                        <Link to="/sign-in">
+                            <Login>
+                                Sign in to like video, comment, and subscribe.
+                                <Button><AccountCircleOutlinedIcon/> SIGN IN</Button>
+                            </Login>
+                        </Link>
+                    <Hr/>
+                    </>
+                    )
+                }
+
+
                 <Title>
                     Best angleTube
                 </Title>

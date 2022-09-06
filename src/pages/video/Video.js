@@ -1,11 +1,27 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import ThumbUpOutlinedIcon from "@mui/icons-material/ThumbUpOutlined";
 import ThumbDownOffAltOutlinedIcon from "@mui/icons-material/ThumbDownOffAltOutlined";
 import ReplyOutlinedIcon from "@mui/icons-material/ReplyOutlined";
 import AddTaskOutlinedIcon from "@mui/icons-material/AddTaskOutlined";
+import ThumbDownIcon from "@mui/icons-material/ThumbDown";
+import ThumbUpIcon from "@mui/icons-material/ThumbUp";
 import styled from 'styled-components'
 
+import {format} from 'timeago.js'
+
 import {Card, Comments} from "components";
+import {useDispatch, useSelector} from "react-redux";
+
+
+
+import { useParams } from 'react-router';
+
+import {Recommendations, Channel} from "components";
+
+import api from "util/axios";
+
+import {fetchStart, fetchSuccess, fetchFailure, defaultState, like, dislike} from "store/reducers/videoSlice";
+
 
 const Container = styled.div`
   display: flex;
@@ -53,9 +69,7 @@ const Button = styled.div`
 `;
 
 
-const Recommendation = styled.div`
-  flex: 2
-`
+
 
 const Hr = styled.hr`
   margin: 15px;
@@ -63,141 +77,129 @@ const Hr = styled.hr`
 `;
 
 
-const Channel = styled.div`
-  display: flex;
-  justify-content: space-between;
-`
 
-const ChannelInfo = styled.div`
-   display: flex;
-  gap: 20px;
-`
-
-const Image = styled.img`
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
+const VideoFrame = styled.video`
+  max-height: 720px;
+  width: 100%;
+  object-fit: cover;
 `;
-
-const ChannelName = styled.span`
-  font-weight: 500;
-`;
-
-const ChannelDetail = styled.div`
-  display: flex;
-  flex-direction: column;
-  color: ${({ theme }) => theme.text};
-`;
-
-
-const ChannelCounter = styled.span`
-  margin-top: 5px;
-  margin-bottom: 20px;
-  color: ${({ theme }) => theme.textSoft};
-  font-size: 12px;
-`;
-
-const Description = styled.p`
-  font-size: 14px;
-`;
-
-const Subscribe = styled.button`
-   background-color: #cc1a00;
-  font-weight: 500;
-  color: white;
-  border: none;
-  border-radius: 3px;
-  height: max-content;
-  padding: 10px 20px;
-  cursor: pointer;
-`
-
-
-
-
 
 
 const Video = () => {
+
+    const {user, loading, error} = useSelector(state => state.user)
+
+    const {video, loading: videoLoading, error: videoError} = useSelector(state => state.video)
+
+    const dispatch = useDispatch()
+
+   const {id} = useParams()
+
+
+    useEffect(() => {
+
+        const fetchData = async () => {
+
+            dispatch(defaultState())
+
+            dispatch((fetchStart()))
+
+            try {
+                const { data: {data} } = await api.get(`/videos/${id}`);
+
+
+                dispatch(fetchSuccess(data))
+
+            }catch (err) {
+                dispatch(fetchFailure(err.response && err.response.data.message ? err.response.data.message : err.message))
+            }
+        }
+
+
+        fetchData()
+
+    }, [id, dispatch])
+
+
+    const handleLike = async () => {
+        await api.put(`/users/like/${video.id}`);
+        dispatch(like(user.id));
+    };
+
+    const handleDislike = async () => {
+        await api.delete(`/users/like/${video.id}`);
+        dispatch(dislike(user.id));
+    };
+
+  /*  const handleSub = async () => {
+        currentUser.subscribedUsers.includes(channel._id)
+            ? await axios.put(`/users/unsub/${channel._id}`)
+            : await axios.put(`/users/sub/${channel._id}`);
+        dispatch(subscription(channel._id));
+    };*/
+
+
     return (
         <Container>
-            <Content>
-                <VideoWrapper>
-                    <iframe
-                        width="100%"
-                        height="720"
-                        src="https://www.youtube.com/embed/k3Vfj-e1Ma4"
-                        title="YouTube video player"
-                        frameBorder="0"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen
-                    ></iframe>
-                </VideoWrapper>
-                <Title>Test Video</Title>
-                <Details>
-                    <Info>7,948,154 views • Jun 22, 2022</Info>
-                    <Buttons>
-                        <Button>
-                            <ThumbUpOutlinedIcon/> 123
-                        </Button>
-                        <Button>
-                            <ThumbDownOffAltOutlinedIcon/> Dislike
-                        </Button>
-                        <Button>
-                            <ReplyOutlinedIcon/> Share
-                        </Button>
-                        <Button>
-                            <AddTaskOutlinedIcon/> Save
-                        </Button>
-                    </Buttons>
-                </Details>
+            {videoLoading ? <p>Loading....</p> : (video && (
+                <Content>
+                    <VideoWrapper>
+                        <VideoFrame src={video.videoUrl} controls />
+                    </VideoWrapper>
+                    <Title>{video.title}</Title>
+                    <Details>
+                        <Info>{video.views} views • {format(video.createdAt)}</Info>
+                        <Buttons>
+                            <Button onClick={handleLike}>
+                                {video.likes?.includes(user.id) ? (
+                                    <>
+                                        <ThumbUpIcon/> {video.likes?.length}
+                                    </>
+                                ) : (
+                                    <>
+                                    <ThumbUpOutlinedIcon/> {video.likes?.length}
+                                    </>
+                                )}
 
-                <Hr/>
+                            </Button>
+                            <Button onClick={handleDislike}>
+                                {video.dislikes?.includes(user.id) ? (
+                                    <>
+                                        <ThumbDownIcon/> {video.dislikes?.length}
+                                    </>
+                                ) : (
 
-                <Channel>
-                    <ChannelInfo>
-                        <Image src="https://yt3.ggpht.com/yti/APfAmoE-Q0ZLJ4vk3vqmV4Kwp0sbrjxLyB8Q4ZgNsiRH=s88-c-k-c0x00ffffff-no-rj-mo" />
-                        <ChannelDetail>
-                        <ChannelName>Lama Dev</ChannelName>
-                        <ChannelCounter>200K subscribers</ChannelCounter>
-                        <Description>
-                            Lorem ipsum dolor, sit amet consectetur adipisicing elit.
-                            Doloribus laborum delectus unde quaerat dolore culpa sit aliquam
-                            at. Vitae facere ipsum totam ratione exercitationem. Suscipit
-                            animi accusantium dolores ipsam ut.
-                        </Description>
-                        </ChannelDetail>
+                                    <>
+                                        <ThumbDownOffAltOutlinedIcon/> {video.dislikes?.length}
+                                    </>
+                                )}
 
-                    </ChannelInfo>
+                            </Button>
+                            <Button>
+                                <ReplyOutlinedIcon/> Share
+                            </Button>
+                            <Button>
+                                <AddTaskOutlinedIcon/> Save
+                            </Button>
+                        </Buttons>
+                    </Details>
 
-                    <Subscribe>
-                        Subscribe
-                    </Subscribe>
-                </Channel>
+                    <Hr/>
 
-                <Hr/>
+                    <Channel video={video}/>
 
-                <Comments>
+                    <Hr/>
 
-                </Comments>
+                    <Comments>
 
-            </Content>
+                    </Comments>
 
-            <Recommendation>
-                <Card type="sm" />
-                <Card type="sm" />
-                <Card type="sm" />
-                <Card type="sm" />
-                <Card type="sm" />
-                <Card type="sm" />
-                <Card type="sm" />
-                <Card type="sm" />
-                <Card type="sm" />
-                <Card type="sm" />
-                <Card type="sm" />
-                <Card type="sm" />
-                <Card type="sm" />
-                <Card type="sm" />
-            </Recommendation>
+                </Content>
+            ))}
+
+
+            {/*<Recommendations user={user}/>*/}
+
         </Container>
     );
 };
